@@ -1,0 +1,181 @@
+
+CREATE DATABASE IF NOT EXISTS bookshopdb;
+USE bookshopdb;
+CREATE TABLE bookshopdb.order_pdf_task (
+    id        BIGINT       NOT NULL AUTO_INCREMENT,
+    orderId   BIGINT       NOT NULL,
+    userId    BIGINT       NOT NULL,
+    status    VARCHAR(20)  NOT NULL,
+    filePath  VARCHAR(255) NULL,
+    createdAt DATETIME     NOT NULL,
+    updatedAt DATETIME     NULL,
+    PRIMARY KEY (id),
+    INDEX idx_order_pdf_task_order (orderId),
+    INDEX idx_order_pdf_task_user (userId),
+    CONSTRAINT fk_order_pdf_task_order FOREIGN KEY (orderId)
+        REFERENCES bookshopdb.orders (id),
+    CONSTRAINT fk_order_pdf_task_user FOREIGN KEY (userId)
+        REFERENCES bookshopdb.user (id)
+);
+Bảng người dùng
+CREATE TABLE bookshopdb.user (
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    username    VARCHAR(25)  NOT NULL,
+    password    VARCHAR(32)  NOT NULL,
+    fullname    VARCHAR(50)  NOT NULL,
+    email       VARCHAR(50)  NOT NULL,
+    phoneNumber VARCHAR(11)  NOT NULL,
+    gender      BIT          NOT NULL,
+    address     VARCHAR(200) NOT NULL,
+    role        VARCHAR(10)  NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE INDEX uq_username (username),
+    UNIQUE INDEX uq_email (email),
+    UNIQUE INDEX uq_phoneNumber (phoneNumber)
+);
+
+Bảng sản phẩm
+CREATE TABLE bookshopdb.product (
+    id             BIGINT       NOT NULL AUTO_INCREMENT,
+    name           VARCHAR(100) NOT NULL,
+    price          FLOAT        NOT NULL,
+    discount       FLOAT        NOT NULL,
+    quantity       SMALLINT     NOT NULL,
+    totalBuy       SMALLINT     NOT NULL,
+    author         VARCHAR(50)  NOT NULL,
+    pages          SMALLINT     NOT NULL,
+    publisher      VARCHAR(100) NOT NULL,
+    yearPublishing YEAR         NOT NULL,
+    description    TEXT         NULL,
+    imageName      VARCHAR(35)  NULL,
+    shop           BIT          NOT NULL,
+    createdAt      DATETIME     NOT NULL,
+    updatedAt      DATETIME     NULL,
+    startsAt       DATETIME     NULL,
+    endsAt         DATETIME     NULL,
+    PRIMARY KEY (id)
+);
+
+Bảng đánh giá sản phẩm
+CREATE TABLE bookshopdb.product_review (
+    id          BIGINT   NOT NULL AUTO_INCREMENT,
+    userId      BIGINT   NOT NULL,
+    productId   BIGINT   NOT NULL,
+    ratingScore TINYINT  NOT NULL,
+    content     TEXT     NOT NULL,
+    isShow      BIT      NOT NULL,
+    createdAt   DATETIME NOT NULL,
+    updatedAt   DATETIME NULL,
+    PRIMARY KEY (id),
+    INDEX idx_product_review_user (userId),
+    INDEX idx_product_review_product (productId),
+    CONSTRAINT fk_product_review_user FOREIGN KEY (userId)
+        REFERENCES bookshopdb.user (id),
+    CONSTRAINT fk_product_review_product FOREIGN KEY (productId)
+        REFERENCES bookshopdb.product (id)
+);
+
+Bảng danh mục
+CREATE TABLE bookshopdb.category (
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    name        VARCHAR(100) NOT NULL,
+    description TEXT         NULL,
+    imageName   VARCHAR(35)  NULL,
+    PRIMARY KEY (id)
+);
+
+Liên kết sản phẩm với danh mục
+CREATE TABLE bookshopdb.product_category (
+    productId  BIGINT NOT NULL,
+    categoryId BIGINT NOT NULL,
+    PRIMARY KEY (productId, categoryId),
+    INDEX idx_product_category_product (productId),
+    INDEX idx_product_category_category (categoryId),
+    CONSTRAINT fk_product_category_product FOREIGN KEY (productId)
+        REFERENCES bookshopdb.product (id),
+    CONSTRAINT fk_product_category_category FOREIGN KEY (categoryId)
+        REFERENCES bookshopdb.category (id)
+);
+
+Giỏ hàng
+CREATE TABLE bookshopdb.cart (
+    id        BIGINT   NOT NULL AUTO_INCREMENT,
+    userId    BIGINT   NOT NULL,
+    createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NULL,
+    PRIMARY KEY (id),
+    INDEX idx_cart_user (userId),
+    CONSTRAINT fk_cart_user FOREIGN KEY (userId)
+        REFERENCES bookshopdb.user (id)
+);
+
+Mục trong giỏ hàng
+CREATE TABLE bookshopdb.cart_item (
+    id        BIGINT   NOT NULL AUTO_INCREMENT,
+    cartId    BIGINT   NOT NULL,
+    productId BIGINT   NOT NULL,
+    quantity  SMALLINT NOT NULL,
+    createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NULL,
+    PRIMARY KEY (id),
+    UNIQUE uq_cartId_productId (cartId, productId),
+    INDEX idx_cart_item_cart (cartId),
+    INDEX idx_cart_item_product (productId),
+    CONSTRAINT fk_cart_item_cart FOREIGN KEY (cartId)
+        REFERENCES bookshopdb.cart (id) ON DELETE CASCADE,
+    CONSTRAINT fk_cart_item_product FOREIGN KEY (productId)
+        REFERENCES bookshopdb.product (id)
+);
+
+ Đơn hàng
+CREATE TABLE bookshopdb.orders (
+    id             BIGINT   NOT NULL AUTO_INCREMENT,
+    userId         BIGINT   NOT NULL,
+    status         TINYINT  NOT NULL,
+    deliveryMethod TINYINT  NOT NULL,
+    deliveryPrice  FLOAT    NOT NULL,
+    createdAt      DATETIME NOT NULL,
+    updatedAt      DATETIME NULL,
+    PRIMARY KEY (id),
+    INDEX idx_orders_user (userId),
+    CONSTRAINT fk_orders_user FOREIGN KEY (userId)
+        REFERENCES bookshopdb.user (id)
+);
+
+ Mục trong đơn hàng
+CREATE TABLE bookshopdb.order_item (
+    id        BIGINT   NOT NULL AUTO_INCREMENT,
+    orderId   BIGINT   NOT NULL,
+    productId BIGINT   NOT NULL,
+    price     FLOAT    NOT NULL,
+    discount  FLOAT    NOT NULL,
+    quantity  SMALLINT NOT NULL,
+    createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NULL,
+    PRIMARY KEY (id),
+    INDEX idx_order_item_orders (orderId),
+    INDEX idx_order_item_product (productId),
+    CONSTRAINT fk_order_item_orders FOREIGN KEY (orderId)
+        REFERENCES bookshopdb.orders (id),
+    CONSTRAINT fk_order_item_product FOREIGN KEY (productId)
+        REFERENCES bookshopdb.product (id)
+);
+
+ Danh sách yêu thích
+CREATE TABLE bookshopdb.wishlist_item (
+    id        BIGINT   NOT NULL AUTO_INCREMENT,
+    userId    BIGINT   NOT NULL,
+    productId BIGINT   NOT NULL,
+    createdAt DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE uq_userId_productId (userId, productId),
+    INDEX idx_wishlist_item_user (userId),
+    INDEX idx_wishlist_item_product (productId),
+    CONSTRAINT fk_wishlist_item_user FOREIGN KEY (userId)
+        REFERENCES bookshopdb.user (id),
+    CONSTRAINT fk_wishlist_item_product FOREIGN KEY (productId)
+        REFERENCES bookshopdb.product (id)
+);
+
+
+
